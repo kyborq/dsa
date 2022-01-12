@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
     int counter = 0;
     bool new_line = false;
     bool page_number = false;
+    bool paragraph_header = false;
 
     string output_name = "output.txt";
     string input_name = "input.txt";
@@ -55,15 +56,31 @@ int main(int argc, char* argv[])
         page_number = line[0] == '-';
 
         if (page_number)
+        {
+            paragraph_header = false;
             output << get_number(line) << " ";
+        }
 
         if (new_line)
-            counter++;
-
-        if (!new_line && !page_number)
         {
-            output << line << endl;
-            getline(file, line);
+            paragraph_header = false;
+            counter++;
+        }
+
+
+        if (!new_line && !page_number && !paragraph_header)
+        {
+            string head = line;
+
+            if (isalpha(line[0]))
+            {
+                paragraph_header = true;
+                getline(file, line);
+                counter++;
+            }
+
+            output << head<< endl;
+
             counter++;
         }
 
