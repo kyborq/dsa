@@ -14,105 +14,104 @@
 using namespace std;
 
 string get_number(string line);
+void print_line(string text, string number);
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     ifstream file;
-    ofstream output;
-    string line;
-
-    int counter = 0;
-    bool new_line = false;
-    bool page_number = false;
-    bool paragraph_header = false;
-
-    string output_name = "output.txt";
     string input_name = "input.txt";
+
+    string line = "";
+    string page = "";
+    string header = "";
+
+    bool is_skip_header = false;
 
     setlocale(LC_ALL, ".1251");
 
-    if (argc > 1)
-    {
-        input_name = argv[1];
-        output_name = argv[2];
-    }
-    else
-    {
-        cout << "Нет аргументов. Введите входной и выходной файл вручную" << endl;
-        cout << "Входной файл: ";
-        cin >> input_name;
-        cout << "Выходной файл: ";
-        cin >> output_name;
-    }
-
     file.open(input_name);
-    output.open(output_name);
-    if (!file) return -1;
-    if (!output) return -1;
+    if (!file)
+        return -1;
 
+    // line[0] == '-' проверка на номер страницы
+    // line.empty()   проверка на пустую строку
     while (getline(file, line))
     {
-        new_line = line[0] == '\0';
-        page_number = line[0] == '-';
 
-        if (page_number)
+        // 1. ищем номера страниц
+        if (line[0] == '-' && !is_skip_header)
         {
-            paragraph_header = false;
-            output << get_number(line) << " ";
+            page = get_number(line);
+
+            // 2. заголовок может быть сразу после номера страницы
+            getline(file, header);
+            print_line(header, page);
         }
 
-        if (new_line)
+        // 3. вычисляем пустая строка или нет
+        if (line.empty())
         {
-            paragraph_header = false;
-            counter++;
-        }
-
-
-        if (!new_line && !page_number && !paragraph_header)
-        {
-            string head = line;
-
-            if (isalpha(line[0]))
+            // is_empty_line = true;
+            getline(file, line);
+            if (line[0] != '-')
             {
-                paragraph_header = true;
-                getline(file, line);
-                counter++;
+                header = line;
             }
 
-            output << head<< endl;
+            if (line[0] == '-')
+            {
+                page = get_number(line);
+                getline(file, header);
+            }
 
-            counter++;
+            print_line(header, page);
         }
 
-        counter++;
+        // if (line.empty() && line[0] != '-')
+        // {
+        //     getline(file, line);
+        //     if (!line.empty())
+        //         header = line;
+        //     getline(file, line);
+        // }
     }
 
-    cout << "Результаты из " << input_name << " сохранены в файл " << output_name << endl;
+    // cout << "Last page is number " << page_number << endl;
+    // cout << "Here is " << t_paragraph_counter << " paragraphs" << endl;
+    // print_line("t_paragraph_counter", page_number);
 
     return 0;
 }
 
 string get_number(string line)
 {
+    int index = 1;
+    int length = line.length();
     string number = "";
 
-    bool flag_start = false;
-    bool flag_end = false;
-
-    int len = line.length();
-    int counter = 1;
-
-    flag_start = line[0] == '-';
-
-    while (flag_start && !flag_end)
+    while (index < length)
     {
-        flag_end = line[counter] == '-';
-
-        if (!flag_end)
-            number += line[counter];
-
-        counter++;
+        if (line[index] != '-')
+            number += line[index];
+        index++;
     }
 
     return number;
+}
+
+void print_line(string text, string number)
+{
+    string splitter = "";
+    int text_len = text.length();
+    int number_len = number.length();
+    int width = 30 - text_len - number_len;
+
+    int index = 0;
+    while (index < width)
+    {
+        splitter += ".";
+        index++;
+    }
+
+    cout << text << splitter << number << endl;
 }
